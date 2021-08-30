@@ -4,11 +4,6 @@ from glob import glob
 import time
 from tensorflow.contrib.data import prefetch_to_device, shuffle_and_repeat, map_and_batch
 import numpy as np
-import tensorflow as tf
-
-physical_devices = tf.config.experimental.list_physical_devices('GPU')
-assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
-config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 class UGATIT(object) :
     def __init__(self, sess, args):
@@ -668,3 +663,20 @@ class UGATIT(object) :
                     '../..' + os.path.sep + image_path), self.img_size, self.img_size))
             index.write("</tr>")
         index.close()
+
+    def test_endpoint_init(self):
+        tf.global_variables_initializer().run(session=self.sess)
+
+        self.saver = tf.train.Saver()
+        could_load, checkpoint_counter = self.load(self.checkpoint_dir)
+
+        if could_load:
+            print(" [*] Load SUCCESS")
+        else:
+            raise ImportError('Could not load checkpoint')
+
+    def test_endpoint(self, img):
+        sample_image = np.asarray(load_img(img))
+        fake_img = self.sess.run(self.test_fake_B, feed_dict={self.test_domain_A: sample_image})
+        img_save = web_save_images(fake_img, [1, 1])
+        return img_save

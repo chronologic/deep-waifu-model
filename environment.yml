@@ -1,7 +1,10 @@
-name: UGATIT
+name: deep_waifu
 dependencies:
   - python=3.6
   - tensorflow-gpu=1.14
+  - numpy
   - pip
   - pip:
     - opencv-python
+    - flask
+    - Pillow

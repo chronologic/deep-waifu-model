@@ -1,14 +1,23 @@
-from UGATIT import UGATIT
+import io
+import json                    
+import base64                  
+import logging             
+import numpy as np
+from PIL import Image
+from flask import Flask, request, jsonify, abort, make_response
 import argparse
+from UGATIT import UGATIT
 from utils import *
 
-"""parsing and configuration"""
+app = Flask(__name__)          
+app.logger.setLevel(logging.DEBUG)
 
 def parse_args():
     desc = "Tensorflow implementation of U-GAT-IT"
     parser = argparse.ArgumentParser(description=desc)
-    parser.add_argument('--phase', type=str, default='train', help='[train / test]')
-    parser.add_argument('--light', type=str2bool, default=False, help='[U-GAT-IT full version / U-GAT-IT light version]')
+    parser.add_argument('--phase', type=str, default='runner', help='[train / test / web / runner]')
+    parser.add_argument('--light', type=str2bool, default=False,
+                        help='[U-GAT-IT full version / U-GAT-IT light version]')
     parser.add_argument('--dataset', type=str, default='selfie2anime', help='dataset_name')
 
     parser.add_argument('--epoch', type=int, default=100, help='The number of epochs to run')
@@ -25,7 +34,8 @@ def parse_args():
     parser.add_argument('--cycle_weight', type=int, default=10, help='Weight about Cycle')
     parser.add_argument('--identity_weight', type=int, default=10, help='Weight about Identity')
     parser.add_argument('--cam_weight', type=int, default=1000, help='Weight about CAM')
-    parser.add_argument('--gan_type', type=str, default='lsgan', help='[gan / lsgan / wgan-gp / wgan-lp / dragan / hinge]')
+    parser.add_argument('--gan_type', type=str, default='lsgan',
+                        help='[gan / lsgan / wgan-gp / wgan-lp / dragan / hinge]')
 
     parser.add_argument('--smoothing', type=str2bool, default=True, help='AdaLIN smoothing effect')
 
@@ -50,7 +60,10 @@ def parse_args():
 
     return check_args(parser.parse_args())
 
+
 """checking arguments"""
+
+
 def check_args(args):
     # --checkpoint_dir
     check_folder(args.checkpoint_dir)
@@ -77,32 +90,64 @@ def check_args(args):
         print('batch size must be larger than or equal to one')
     return args
 
-"""main"""
-def main():
+
+
+sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True, device_count = {'GPU': 0}))
+args = parse_args()
+gan = UGATIT(sess, args)
+
+# build graph
+gan.build_model()
+
+# show network architecture
+show_all_variables()
+
+gan.test_endpoint_init()
+
+
+@app.route("/selfie2anime", methods=['POST'])
+def selfie2anime():         
+    file = request.files['file']
+
+    # convert string of image data to uint8
+    nparr = np.fromfile(file, np.uint8)
+    # decode image
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
     # parse arguments
     args = parse_args()
     if args is None:
-      exit()
+        exit()
 
     # open session
-    # with tf.Session(config=tf.ConfigProto(allow_soft_placement=True, device_count = {'GPU': 0})) as sess:
-    # device_count = {'GPU': 0}  forces model to use CPU only
-    with tf.Session(config=tf.ConfigProto(allow_soft_placement=True, device_count = {'GPU': 0})) as sess:
-        gan = UGATIT(sess, args)
+    # with tf.Session(config=tf.ConfigProto(allow_soft_placement=True), device_count = {'GPU': 0}) as sess:
+    #     gan = UGATIT(sess, args)
 
-        # build graph
-        gan.build_model()
+    #     # build graph
+    #     gan.build_model()
 
-        # show network architecture
-        show_all_variables()
+    #     # show network architecture
+    #     show_all_variables()
 
-        if args.phase == 'train' :
-            gan.train()
-            print(" [*] Training finished!")
+        # do some fancy processing here....
+    fake_img = gan.test_endpoint(img)
 
-        if args.phase == 'test' :
-            gan.test()
-            print(" [*] Test finished!")
+    # save the file with to our photos folder
+    # filename = str(uuid.uuid1()) + '.png'
+    # cv2.imwrite('uploads/' + filename, fake_img)
+    # # append image urls
+    # file_urls.append(photos.url(filename))
+    retval, buffer = cv2.imencode('.png', fake_img)
+    response = make_response(buffer.tobytes())
+    response.headers['Content-Type'] = 'image/png'
 
-if __name__ == '__main__':
-    main()
+    return response
+
+  
+  
+def run_server_api():
+    app.run(host='0.0.0.0', port=8080)
+  
+  
+if __name__ == "__main__":     
+    run_server_api()
