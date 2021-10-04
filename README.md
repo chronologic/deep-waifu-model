@@ -8,6 +8,15 @@ Credit for the model goes to https://github.com/taki0112/UGATIT and https://gith
 
 The live version of the dapp can be found [here](https://deepwaifu.chronologic.network/).
 
+## 🗺 Project overview
+
+This project consists of the following repositories:
+
+- https://github.com/chronologic/deep-waifu-ui
+- https://github.com/chronologic/deep-waifu-server
+- https://github.com/chronologic/deep-waifu-payment-contract
+- https://github.com/chronologic/deep-waifu-model (this repository)
+
 ## 💽 Installation
 
 Run `conda env create -f environment.yml`
