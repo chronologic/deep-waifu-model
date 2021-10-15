@@ -1,3 +1,5 @@
+![DeepWaifu Features](public/Features.jpg)
+
 # deep-waifu-model
 
 This is a part of the [DeepWaifu](https://blog.chronologic.network/no-waifu-no-laifu-we-use-deep-networks-to-draw-your-anime-style-portrait-5fbb0ee6b16a) project.
@@ -16,6 +18,10 @@ This project consists of the following repositories:
 - https://github.com/chronologic/deep-waifu-server
 - https://github.com/chronologic/deep-waifu-payment-contract
 - https://github.com/chronologic/deep-waifu-model (this repository)
+
+## 👀 Demo video
+
+[![Demo Video](public/DemoVideo.jpg)](https://youtu.be/hTFxlKN7sFw)
 
 ## 💽 Installation
 
